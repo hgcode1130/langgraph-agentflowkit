@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, is_dataclass
+from dataclasses import fields, is_dataclass
 from types import MappingProxyType
 from typing import Mapping
 
@@ -36,5 +36,7 @@ def to_jsonable(value: object) -> object:
     if isinstance(value, tuple | list):
         return [to_jsonable(item) for item in value]
     if is_dataclass(value) and not isinstance(value, type):
-        return to_jsonable(asdict(value))
+        return {
+            field.name: to_jsonable(getattr(value, field.name)) for field in fields(value)
+        }
     return value
