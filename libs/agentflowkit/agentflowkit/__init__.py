@@ -1,6 +1,12 @@
 """Planner-ReAct multi-agent workflow extensions for LangGraph."""
 
 from agentflowkit.engine import AgentFlow, AgentFlowComponents
+from agentflowkit.llm_planner import LLMPlanner
+from agentflowkit.model_client import (
+    ChatModel,
+    OpenAICompatibleChatModel,
+    OpenAICompatibleConfig,
+)
 from agentflowkit.models import (
     ModelProfile,
     Plan,
@@ -30,7 +36,11 @@ __all__ = [
     "AgentFlow",
     "AgentFlowComponents",
     "CapabilityRouter",
+    "ChatModel",
+    "LLMPlanner",
     "ModelProfile",
+    "OpenAICompatibleChatModel",
+    "OpenAICompatibleConfig",
     "Plan",
     "PlanStep",
     "RouteDecision",
