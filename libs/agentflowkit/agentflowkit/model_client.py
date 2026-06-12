@@ -60,6 +60,7 @@ class OpenAICompatibleChatModel:
             method="POST",
             headers={
                 "Authorization": f"Bearer {self._config.api_key}",
+                "Accept": "application/json, text/event-stream",
                 "Content-Type": "application/json",
                 "User-Agent": "AgentFlowKit/0.1",
             },
@@ -94,7 +95,7 @@ def _parse_chat_response(raw: bytes) -> str:
         payload = json.loads(text)
         content = payload["choices"][0]["message"]["content"]
     except (KeyError, IndexError, TypeError, json.JSONDecodeError) as exc:
-        raise ModelClientError("Model provider returned invalid chat payload") from exc
+        raise ModelClientError(_invalid_payload_message(text)) from exc
     if not isinstance(content, str) or not content.strip():
         raise ModelClientError("Model provider returned empty content")
     return content
@@ -131,3 +132,8 @@ def _parse_sse_chunk(chunk: str) -> str:
 def _http_error_message(exc: HTTPError) -> str:
     body = exc.read().decode("utf-8", errors="replace")
     return f"Model provider HTTP {exc.code}: {body}"
+
+
+def _invalid_payload_message(text: str) -> str:
+    sample = text[:200].replace("\n", " ")
+    return f"Model provider returned invalid chat payload: {sample}"
