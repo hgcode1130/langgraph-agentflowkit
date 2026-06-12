@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "langgraph-agentflowkit"
+version = "0.1.0"
+description = "Planner-ReAct multi-agent workflow extensions for LangGraph."
+authors = []
+requires-python = ">=3.10"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+dependencies = [
+    "langgraph>=1.2.4",
+]
+
+[dependency-groups]
+test = [
+    "pytest",
+]
+lint = [
+    "ruff",
+]
+dev = [
+    {include-group = "test"},
+    {include-group = "lint"},
+]
+
+[tool.uv.sources]
+langgraph = { path = "../langgraph", editable = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["agentflowkit"]
+
+[tool.pytest.ini_options]
+addopts = "--strict-markers --strict-config --durations=5 -vv"
+
+[tool.ruff]
+lint.select = ["E", "F", "I", "UP", "B"]
+lint.ignore = ["E501"]
+target-version = "py310"
