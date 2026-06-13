@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentflowkit-console-api"
+version = "0.1.0"
+description = "FastAPI backend for the AgentFlowKit workflow console."
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "langgraph-agentflowkit",
+]
+
+[dependency-groups]
+test = [
+    "httpx",
+    "pytest",
+]
+dev = [
+    {include-group = "test"},
+]
+
+[tool.uv.sources]
+langgraph-agentflowkit = { path = "../../../libs/agentflowkit", editable = true }
+langgraph = { path = "../../../libs/langgraph", editable = true }
+langgraph-checkpoint = { path = "../../../libs/checkpoint", editable = true }
+langgraph-prebuilt = { path = "../../../libs/prebuilt", editable = true }
+langgraph-sdk = { path = "../../../libs/sdk-py", editable = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["agentflowkit_console_api"]
+
+[tool.pytest.ini_options]
+addopts = "-vv"
