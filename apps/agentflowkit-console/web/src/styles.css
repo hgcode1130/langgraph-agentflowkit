@@ -297,6 +297,56 @@ code {
   font-size: 11px;
 }
 
+.tool-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.tool-list span {
+  display: inline-flex;
+  border: 1px solid #c8d6d2;
+  border-radius: 999px;
+  background: #eef6f3;
+  padding: 4px 7px;
+  color: #285c52;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.compact-tools {
+  margin: 4px 0 0;
+}
+
+.compact-tools span {
+  font-size: 10px;
+  padding: 3px 6px;
+}
+
+.data-flow-panel {
+  background: #fbfcfc;
+}
+
+.artifact-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.artifact-flow span:not(.chain-arrow) {
+  border: 1px solid #cbd5dc;
+  border-left: 4px solid #174f5f;
+  border-radius: 6px;
+  background: #ffffff;
+  padding: 9px 11px;
+  color: #253844;
+  font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .content-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(360px, 0.85fr);
@@ -443,6 +493,17 @@ code {
   padding: 6px;
   color: #52616d;
   font-size: 12px;
+}
+
+.handoff-event {
+  border-radius: 6px;
+  background: #f5faf7;
+  padding: 6px;
+}
+
+.handoff-event .event-index {
+  background: #d8eee5;
+  color: #166145;
 }
 
 .json-panel pre {

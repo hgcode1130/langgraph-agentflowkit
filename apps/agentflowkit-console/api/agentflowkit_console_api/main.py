@@ -8,10 +8,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from agentflowkit_console_api.agents import (
-    agent_dict_for_skill,
-    agent_profiles,
-)
+from agentflowkit_console_api.agents import agent_dict_for_skill, agent_profiles
 from agentflowkit_console_api.config import deepseek_settings, grok_settings
 from agentflowkit_console_api.deepseek_flow import build_deepseek_flow, build_grok_flow
 from agentflowkit_console_api.demo_flow import (
@@ -157,5 +154,13 @@ def _with_agent_metadata(result: object) -> object:
             continue
         skill_name = step.get("skill_name")
         if isinstance(skill_name, str):
-            step["agent"] = agent_dict_for_skill(skill_name)
+            agent = agent_dict_for_skill(skill_name)
+            step["agent"] = agent
+            if agent:
+                step["tools"] = agent.get("tools", [])
+        output = step.get("output")
+        if isinstance(output, dict):
+            step["handoff"] = output.get("handoff")
+            step["artifact"] = output.get("artifact")
+            step["received_artifacts"] = output.get("received_artifacts", [])
     return result

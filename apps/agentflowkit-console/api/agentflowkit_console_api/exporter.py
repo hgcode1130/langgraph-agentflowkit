@@ -77,25 +77,29 @@ def _render_markdown(record: Mapping[str, Any]) -> str:
         json.dumps(request.get("inputs", {}), ensure_ascii=False, indent=2),
         "```",
         "",
-        "## 步骤输出",
+        "## Agent 输出",
         "",
     ]
 
     if not step_results:
-        lines.extend(["暂无步骤输出。", ""])
+        lines.extend(["暂无 Agent 输出。", ""])
     for index, step_obj in enumerate(step_results, start=1):
         step = _mapping(step_obj)
         agent = _mapping(step.get("agent"))
+        output = _mapping(step.get("output"))
         lines.extend(
             [
                 f"### {index}. {agent.get('agent_name') or step.get('step_id', '')}",
                 "",
-                f"- 步骤 ID: `{step.get('step_id', '')}`",
-                f"- 技能: `{step.get('skill_name', '')}`",
-                f"- 模型: `{step.get('model_id', '')}`",
+                f"- Step ID: `{step.get('step_id', '')}`",
+                f"- 绑定技能: `{step.get('skill_name', '')}`",
+                f"- 路由模型: `{step.get('model_id', '')}`",
                 f"- Agent 角色: {agent.get('role', '未声明')}",
+                f"- 可用工具: {', '.join(_list(agent.get('tools')))}",
+                f"- 接收 artifact: {', '.join(_list(output.get('received_artifacts'))) or '无'}",
+                f"- 产出 artifact: `{output.get('artifact', '')}`",
                 "",
-                str(step.get("output", "")),
+                str(output.get("content", step.get("output", ""))),
                 "",
             ]
         )
@@ -121,5 +125,5 @@ def _mapping(value: object) -> Mapping[str, Any]:
     return value if isinstance(value, Mapping) else {}
 
 
-def _list(value: object) -> list[object]:
+def _list(value: object) -> list[Any]:
     return value if isinstance(value, list) else []

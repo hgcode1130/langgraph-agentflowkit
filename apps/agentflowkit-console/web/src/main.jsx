@@ -26,18 +26,21 @@ const FALLBACK_AGENTS = {
     agent_name: "研究 Agent",
     role: "资料分析与事实提取",
     responsibility: "负责理解任务背景、提取关键事实，并形成研究要点。",
+    tools: ["lookup", "extract_research_notes"],
     order: 1,
   },
   write_skill: {
     agent_name: "写作 Agent",
     role: "实验报告组织与生成",
     responsibility: "负责将研究要点组织为实验报告草稿。",
+    tools: ["compose_report", "structure_report"],
     order: 2,
   },
   review_skill: {
     agent_name: "审查 Agent",
     role: "质量审查与需求覆盖检查",
     responsibility: "负责从学术性、结构性、需求覆盖度和可验证性角度审查输出。",
+    tools: ["check_requirements", "score_report"],
     order: 3,
   },
 };
@@ -55,6 +58,7 @@ const EVENT_LABELS = {
   thought: "思考",
   action: "工具调用",
   observation: "工具反馈",
+  handoff: "Agent 输出传递",
   finish: "完成",
 };
 
@@ -219,7 +223,7 @@ function App() {
           <div className="section-heading">
             <div>
               <h2>新建多 Agent 工作流实验</h2>
-              <p>提交任务，观察 Planner、Agent 分工、模型路由和执行轨迹。</p>
+              <p>提交任务，观察 Planner、Agent 分工、模型路由、工具调用和输出传递。</p>
             </div>
             <button
               className="primary-button"
@@ -280,13 +284,14 @@ function App() {
         </section>
 
         <AgentChain agents={chainAgents} />
+        <AgentDataFlow stepResults={stepResults} />
 
         {selectedTemplate ? (
           <section className="panel">
             <div className="section-heading tight">
               <div>
                 <h2>模板中的 Agent 分工</h2>
-                <p>底层仍由 Skill 执行，展示层将其包装为 Agent 协作单元。</p>
+                <p>每个 Agent 都有独立工具集，底层仍由 Skill 执行。</p>
               </div>
             </div>
             <div className="template-steps">
@@ -299,6 +304,7 @@ function App() {
                     </strong>
                     <span>{agent?.role || step.capability}</span>
                     <p>{agent?.responsibility || step.title}</p>
+                    <ToolList tools={agent?.tools || []} />
                     <code>{step.skill_name}</code>
                   </article>
                 );
@@ -329,6 +335,7 @@ function App() {
                 <div className="step-results">
                   {stepResults.map((step, index) => {
                     const agent = step.agent || FALLBACK_AGENTS[step.skill_name];
+                    const output = normalizeOutput(step.output);
                     return (
                       <article key={step.step_id} className="step-card">
                         <div className="step-meta">
@@ -340,8 +347,15 @@ function App() {
                         <div className="agent-detail-line">
                           <span>绑定技能：{step.skill_name}</span>
                           <span>职责：{agent?.role || "未声明"}</span>
+                          <span>
+                            接收：{output.received_artifacts.length > 0
+                              ? output.received_artifacts.join(", ")
+                              : "无"}
+                          </span>
+                          <span>产出：{output.artifact || "无"}</span>
                         </div>
-                        <p>{String(step.output)}</p>
+                        <ToolList tools={step.tools || agent?.tools || []} />
+                        <p>{String(output.content || step.output || "")}</p>
                       </article>
                     );
                   })}
@@ -365,14 +379,17 @@ function App() {
             </div>
             <div className="timeline">
               {events.map((event) => (
-                <article key={event.index} className="event-row">
+                <article
+                  key={event.index}
+                  className={`event-row ${event.kind === "handoff" ? "handoff-event" : ""}`}
+                >
                   <span className="event-index">{event.index}</span>
                   <div>
                     <strong>
                       {EVENT_LABELS[event.kind] || event.kind}
                       <em>{event.kind}</em>
                     </strong>
-                    <p>{event.message}</p>
+                    <p>{handoffMessage(event)}</p>
                     <code>{JSON.stringify(event.payload)}</code>
                   </div>
                 </article>
@@ -475,6 +492,7 @@ function AgentChain({ agents }) {
             <div className="chain-node agent-node">
               <strong>{agent.agent_name}</strong>
               <span>{agent.role}</span>
+              <ToolList tools={agent.tools || []} compact />
             </div>
           </React.Fragment>
         ))}
@@ -485,6 +503,51 @@ function AgentChain({ agents }) {
         </div>
       </div>
     </section>
+  );
+}
+
+function AgentDataFlow({ stepResults }) {
+  const artifacts = stepResults.map((step) => normalizeOutput(step.output)).filter((item) => item.artifact);
+  return (
+    <section className="panel data-flow-panel">
+      <div className="section-heading tight">
+        <div>
+          <h2>Agent 数据流</h2>
+          <p>上一个 Agent 的 artifact 会进入下一个 Agent 的输入上下文。</p>
+        </div>
+      </div>
+      <div className="artifact-flow">
+        {artifacts.length === 0 ? (
+          <>
+            <span>research_notes</span>
+            <ChainArrow />
+            <span>report_draft</span>
+            <ChainArrow />
+            <span>review_result</span>
+          </>
+        ) : (
+          artifacts.map((artifact, index) => (
+            <React.Fragment key={artifact.artifact}>
+              {index > 0 ? <ChainArrow /> : null}
+              <span>{artifact.artifact}</span>
+            </React.Fragment>
+          ))
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ToolList({ tools, compact = false }) {
+  if (!tools || tools.length === 0) {
+    return null;
+  }
+  return (
+    <div className={compact ? "tool-list compact-tools" : "tool-list"}>
+      {tools.map((tool) => (
+        <span key={tool}>{tool}</span>
+      ))}
+    </div>
   );
 }
 
@@ -514,6 +577,31 @@ function InfoLine({ icon, label, value }) {
       <strong>{value}</strong>
     </div>
   );
+}
+
+function normalizeOutput(output) {
+  if (output && typeof output === "object" && !Array.isArray(output)) {
+    return {
+      artifact: output.artifact || "",
+      content: output.content || "",
+      received_artifacts: output.received_artifacts || [],
+      handoff: output.handoff || null,
+    };
+  }
+  return {
+    artifact: "",
+    content: output,
+    received_artifacts: [],
+    handoff: null,
+  };
+}
+
+function handoffMessage(event) {
+  if (event.kind !== "handoff") {
+    return event.message;
+  }
+  const payload = event.payload || {};
+  return `${payload.from_agent} 将 ${payload.artifact} 传递给 ${payload.to_agent}`;
 }
 
 async function apiGet(path) {
