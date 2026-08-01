@@ -23,7 +23,7 @@ jobs:
     env:
       HAS_LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY != '' }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Python
         uses: ./.github/actions/uv_setup
